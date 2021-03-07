@@ -1,4 +1,4 @@
-package com.leliuk.model;
+package com.leliuk.model.view;
 
 import javafx.fxml.FXMLLoader;
 import lombok.Value;

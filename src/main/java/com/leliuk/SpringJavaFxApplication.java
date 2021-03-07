@@ -1,7 +1,8 @@
 package com.leliuk;
 
-import com.leliuk.controller.MainController;
-import com.leliuk.model.View;
+import com.leliuk.controller.HierarchyConstructionController;
+import com.leliuk.model.view.StageAware;
+import com.leliuk.model.view.View;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.layout.GridPane;
@@ -15,7 +16,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 public class SpringJavaFxApplication extends Application {
 
     private ConfigurableApplicationContext context;
-    private View<GridPane, MainController> mainView;
+    private View<GridPane, HierarchyConstructionController> mainView;
 
     @Override
     public void init() {
@@ -24,7 +25,8 @@ public class SpringJavaFxApplication extends Application {
     }
 
     @Override
-    public void start(Stage primaryStage) throws Exception {
+    public void start(Stage primaryStage) {
+        populateStageAwareWithStage(primaryStage);
         primaryStage.setScene(new Scene(mainView.getGraphics()));
         primaryStage.show();
     }
@@ -40,7 +42,11 @@ public class SpringJavaFxApplication extends Application {
     }
 
     @Autowired
-    public void setMainView(View<GridPane, MainController> mainView) {
+    public void setMainView(View<GridPane, HierarchyConstructionController> mainView) {
         this.mainView = mainView;
+    }
+
+    private void populateStageAwareWithStage(Stage stage) {
+        context.getBeanFactory().getBeansOfType(StageAware.class).values().forEach(stageAware -> stageAware.setStage(stage));
     }
 }
