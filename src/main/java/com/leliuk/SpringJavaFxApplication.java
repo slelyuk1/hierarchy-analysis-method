@@ -6,6 +6,7 @@ import com.leliuk.model.view.View;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
@@ -16,7 +17,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 public class SpringJavaFxApplication extends Application {
 
     private ConfigurableApplicationContext context;
-    private View<GridPane, HierarchyConstructionController> mainView;
+    private View<VBox, HierarchyConstructionController> mainView;
 
     @Override
     public void init() {
@@ -42,7 +43,7 @@ public class SpringJavaFxApplication extends Application {
     }
 
     @Autowired
-    public void setMainView(View<GridPane, HierarchyConstructionController> mainView) {
+    public void setMainView(View<VBox, HierarchyConstructionController> mainView) {
         this.mainView = mainView;
     }
 

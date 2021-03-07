@@ -17,4 +17,9 @@ public abstract class AbstractStageAware implements StageAware {
     public Optional<Stage> getStage() {
         return Optional.ofNullable(stage);
     }
+
+    protected Stage getStageDangerously() {
+        return getStage()
+                .orElseThrow(() -> new IllegalStateException("HierarchyConstructionController is not aware of any stage. Cannot proceed to next view."));
+    }
 }

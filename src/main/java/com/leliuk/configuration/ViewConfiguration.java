@@ -5,6 +5,7 @@ import com.leliuk.controller.PriorityEvaluationController;
 import com.leliuk.model.view.View;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
 import lombok.AllArgsConstructor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -21,7 +22,7 @@ public class ViewConfiguration {
     private final ApplicationContext context;
 
     @Bean
-    public View<GridPane, HierarchyConstructionController> hierarchyConstructionView() throws IOException {
+    public View<VBox, HierarchyConstructionController> hierarchyConstructionView() throws IOException {
         return new View<>(initFxmlLoader(HIERARCHY_CONSTRUCTION_VIEW_PATH));
     }
 

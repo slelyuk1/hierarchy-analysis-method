@@ -2,7 +2,7 @@ package com.leliuk.controller.control.custom.table;
 
 import javafx.util.converter.NumberStringConverter;
 
-class CustomNumberStringConverter extends NumberStringConverter {
+class NonExceptionalNumberStringConverter extends NumberStringConverter {
     @Override
     public Number fromString(String value) {
         try {

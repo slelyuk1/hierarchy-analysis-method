@@ -1,21 +1,26 @@
 package com.leliuk.controller;
 
-import com.leliuk.model.hierarchy.HierarchyAnalysisModel;
 import com.leliuk.model.hierarchy.HierarchyMember;
+import com.leliuk.model.hierarchy.Priority;
+import com.leliuk.model.hierarchy.PriorityMatrix;
 import com.leliuk.model.view.AbstractStageAware;
 import com.leliuk.model.view.View;
+import com.leliuk.service.HierarchyAnalysisService;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.BooleanExpression;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
-import javafx.stage.Stage;
+import javafx.stage.FileChooser;
 import javafx.util.Callback;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class HierarchyConstructionController extends AbstractStageAware {
@@ -31,22 +36,26 @@ public class HierarchyConstructionController extends AbstractStageAware {
     private Button deleteButton;
     @FXML
     private Button navigateToPrioritiesButton;
+
+    private HierarchyAnalysisService service;
     private View<GridPane, PriorityEvaluationController> priorityEvaluationView;
 
     public void onNavigateToPrioritiesClicked() {
-        HierarchyAnalysisModel hierarchyAnalysisModel = HierarchyAnalysisModel.getInstance();
         HierarchyMember goal = new HierarchyMember(goalTextField.getText());
-        hierarchyAnalysisModel.createPriorityMatrices(goal, criteriaListView.getItems(), alternativesListView.getItems());
+        List<PriorityMatrix> matrices = service.createPriorityMatrices(goal, criteriaListView.getItems(), alternativesListView.getItems());
         PriorityEvaluationController priorityEvaluationController = priorityEvaluationView.getController();
-        priorityEvaluationController.fillPriorityTable(hierarchyAnalysisModel.getPriorityMatrices());
-        Stage stage = getStage()
-                .orElseThrow(() -> new IllegalStateException("HierarchyConstructionController is not aware of any stage. Cannot proceed to next view."));
-        stage.setScene(new Scene(priorityEvaluationView.getGraphics()));
+        priorityEvaluationController.fillPriorityTable(matrices.get(0), matrices.get(1), matrices.subList(2, matrices.size()));
+        getStageDangerously().setScene(new Scene(priorityEvaluationView.getGraphics()));
     }
 
     @Autowired
     public void setPriorityEvaluationView(View<GridPane, PriorityEvaluationController> priorityEvaluationView) {
         this.priorityEvaluationView = priorityEvaluationView;
+    }
+
+    @Autowired
+    public void setService(HierarchyAnalysisService service) {
+        this.service = service;
     }
 
     @FXML
@@ -63,11 +72,36 @@ public class HierarchyConstructionController extends AbstractStageAware {
         });
     }
 
-    public void onDeleteButtonClicked() {
+    @FXML
+    private void onDeleteButtonClicked() {
         List<HierarchyMember> criteria = criteriaListView.getItems();
         List<HierarchyMember> alternatives = alternativesListView.getItems();
         criteriaListView.getSelectionModel().getSelectedIndices().forEach(i -> criteria.remove(i.intValue()));
         alternativesListView.getSelectionModel().getSelectedIndices().forEach(i -> alternatives.remove(i.intValue()));
+    }
+
+    @FXML
+    public void onImportClick() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Import Hierarchy");
+        fileChooser.setInitialDirectory(new File("saved/"));
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("HAM", "*.ham"));
+        File chosen = fileChooser.showOpenDialog(getStageDangerously());
+        if (chosen != null) {
+            service.deserializePriorityMatrices(chosen).ifPresent(model -> {
+                goalTextField.setText(model.getGoalMatrix().getGoal().getName());
+                criteriaListView.getItems().addAll(
+                        model.getGoalMatrix().getPriorities().stream()
+                                .map(Priority::getHierarchyMember)
+                                .collect(Collectors.toList())
+                );
+                alternativesListView.getItems().addAll(
+                        model.getFirstAlternativeMatrix().getPriorities().stream()
+                                .map(Priority::getHierarchyMember)
+                                .collect(Collectors.toList())
+                );
+            });
+        }
     }
 
     @FXML
@@ -76,17 +110,6 @@ public class HierarchyConstructionController extends AbstractStageAware {
         prepareNavigateToPrioritiesButton();
         prepareAddButton();
         prepareDeleteButton();
-
-        // todo remove
-        goalTextField.setText("Test Goal");
-        criteriaListView.getItems().add(new HierarchyMember("Criteria1"));
-        criteriaListView.getItems().add(new HierarchyMember("Criteria2"));
-        criteriaListView.getItems().add(new HierarchyMember("Criteria3"));
-        criteriaListView.getItems().add(new HierarchyMember("Criteria4"));
-        alternativesListView.getItems().add(new HierarchyMember("Alternative1"));
-        alternativesListView.getItems().add(new HierarchyMember("Alternative2"));
-        alternativesListView.getItems().add(new HierarchyMember("Alternative3"));
-        alternativesListView.getItems().add(new HierarchyMember("Alternative4"));
     }
 
     private void prepareCriteriaAndAlternativesListViews() {

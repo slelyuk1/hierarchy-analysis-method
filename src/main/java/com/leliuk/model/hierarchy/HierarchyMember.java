@@ -2,8 +2,10 @@ package com.leliuk.model.hierarchy;
 
 import lombok.Getter;
 
+import java.io.Serializable;
+
 @Getter
-public class HierarchyMember {
+public class HierarchyMember implements Serializable {
     private final String name;
     private final String description;
 

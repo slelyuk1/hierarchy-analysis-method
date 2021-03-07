@@ -2,13 +2,14 @@ package com.leliuk.model.hierarchy;
 
 import lombok.Getter;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Getter
-public class PriorityMatrix {
+public class PriorityMatrix implements Serializable {
     private final HierarchyMember goal;
     private final List<Priority<Double>> priorities;
 
