@@ -56,12 +56,14 @@ public class HierarchyConstructionController extends AbstractStageAware {
         super.setStage(stage);
         stage.setOnCloseRequest(event -> {
             HierarchyMember goal = new HierarchyMember(goalTextField.getText());
-            if(model != null){
-                service.mergeHierarchyModel(model, goal, criteriaListView.getItems(), alternativesListView.getItems());
-            }else{
-                model = service.createHierarchyModel(goal, criteriaListView.getItems(), alternativesListView.getItems());
+            if (criteriaListView.getItems().size() > 1 && alternativesListView.getItems().size() > 1) {
+                if (model != null) {
+                    service.mergeHierarchyModel(model, goal, criteriaListView.getItems(), alternativesListView.getItems());
+                } else {
+                    model = service.createHierarchyModel(goal, criteriaListView.getItems(), alternativesListView.getItems());
+                }
+                service.serializePriorityMatrices(model);
             }
-            service.serializePriorityMatrices(model);
         });
     }
 
@@ -101,6 +103,7 @@ public class HierarchyConstructionController extends AbstractStageAware {
 
     @FXML
     public void onImportClicked() {
+        // todo check when imported and added a new value
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Import Hierarchy");
         fileChooser.setInitialDirectory(new File("saved/"));
@@ -132,20 +135,6 @@ public class HierarchyConstructionController extends AbstractStageAware {
         prepareNavigateToPrioritiesButton();
         prepareAddButton();
         prepareDeleteButton();
-
-        //         todo remove
-        goalTextField.setText("Будинок");
-        criteriaListView.getItems().add(new HierarchyMember("РБ"));
-        criteriaListView.getItems().add(new HierarchyMember("ЗМ"));
-        criteriaListView.getItems().add(new HierarchyMember("М"));
-        criteriaListView.getItems().add(new HierarchyMember("ЧП"));
-        criteriaListView.getItems().add(new HierarchyMember("Д"));
-        criteriaListView.getItems().add(new HierarchyMember("СО"));
-        criteriaListView.getItems().add(new HierarchyMember("ЗС"));
-        criteriaListView.getItems().add(new HierarchyMember("ФУ"));
-        alternativesListView.getItems().add(new HierarchyMember("А"));
-        alternativesListView.getItems().add(new HierarchyMember("Б"));
-        alternativesListView.getItems().add(new HierarchyMember("В"));
     }
 
     private void prepareCriteriaAndAlternativesListViews() {

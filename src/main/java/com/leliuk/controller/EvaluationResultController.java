@@ -28,6 +28,7 @@ public class EvaluationResultController {
                 .map(NormalizedLocalPriority::new)
                 .collect(Collectors.toList());
         Map<HierarchyMember, Double> globalPriorities = new HashMap<>();
+        // todo check formula
         alternativesLocalPriorities.forEach(alternative ->
                 alternative.getNormalizedLocalPriorities().forEach((key, value) ->
                         globalPriorities.merge(key,
