@@ -11,7 +11,7 @@ import java.util.stream.Stream;
 public class Priority implements Serializable {
 
     HierarchyMember hierarchyMember;
-    List<Number> values;
+    List<Double> values;
 
     public Priority(HierarchyMember hierarchyMember, int valuesQuantity) {
         this.hierarchyMember = hierarchyMember;
@@ -22,8 +22,8 @@ public class Priority implements Serializable {
         values.addAll(zeroGenerator().limit(quantity).collect(Collectors.toList()));
     }
 
-    private static Stream<Number> zeroGenerator() {
-        return Stream.generate(() -> 0);
+    private static Stream<Double> zeroGenerator() {
+        return Stream.generate(() -> 0.0);
     }
 
 }

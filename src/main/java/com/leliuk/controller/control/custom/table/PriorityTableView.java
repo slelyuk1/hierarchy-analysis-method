@@ -1,6 +1,7 @@
 package com.leliuk.controller.control.custom.table;
 
 import com.leliuk.configuration.RandomConsistencyValuesConfiguration;
+import com.leliuk.controller.control.custom.table.row.PriorityRow;
 import com.leliuk.model.hierarchy.Priority;
 import com.leliuk.model.hierarchy.PriorityMatrix;
 import javafx.beans.binding.DoubleBinding;

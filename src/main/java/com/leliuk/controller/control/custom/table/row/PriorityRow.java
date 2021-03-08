@@ -1,7 +1,8 @@
-package com.leliuk.controller.control.custom.table;
+package com.leliuk.controller.control.custom.table.row;
 
 import com.leliuk.model.hierarchy.HierarchyMember;
 import com.leliuk.model.hierarchy.Priority;
+import com.leliuk.utils.MathUtils;
 import javafx.beans.Observable;
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.DoubleProperty;
@@ -38,9 +39,11 @@ public class PriorityRow {
 
             @Override
             protected double computeValue() {
-                return priorities.stream()
-                        .map(priority -> 1 / priority.get())
-                        .reduce(0.0, Double::sum);
+                return MathUtils.sum(
+                        priorities.stream()
+                                .map(priority -> 1 / priority.get())
+                                .collect(Collectors.toList())
+                );
             }
         });
 
@@ -52,10 +55,11 @@ public class PriorityRow {
 
             @Override
             protected double computeValue() {
-                double multiplied = priorities.stream()
-                        .map(ObservableDoubleValue::get)
-                        .reduce(1.0, (l, r) -> l * r);
-                return Math.pow(multiplied, 1.0 / priorities.size());
+                return MathUtils.localPriority(
+                        priorities.stream()
+                                .map(ObservableDoubleValue::get)
+                                .collect(Collectors.toList())
+                );
             }
         });
         localPriorityNormalized = new SimpleDoubleProperty();
@@ -72,11 +76,11 @@ public class PriorityRow {
 
             @Override
             protected double computeValue() {
-                double currentLocalPriority = localPriority.doubleValue();
-                double localPrioritiesSum = Arrays.stream(localPrioritiesArr)
-                        .map(DoubleProperty::doubleValue)
-                        .reduce(0.0, Double::sum);
-                return currentLocalPriority / localPrioritiesSum;
+                return MathUtils.normalizedLocalPriority(localPriority.get(),
+                        Arrays.stream(localPrioritiesArr)
+                                .map(DoubleProperty::doubleValue)
+                                .collect(Collectors.toList())
+                );
             }
         });
 
@@ -87,7 +91,7 @@ public class PriorityRow {
 
             @Override
             protected double computeValue() {
-                return prioritySum.getValue() * localPriorityNormalized.getValue();
+                return MathUtils.lambda(prioritySum.get(), localPriorityNormalized.get());
             }
         });
     }

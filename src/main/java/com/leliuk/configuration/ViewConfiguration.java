@@ -1,5 +1,6 @@
 package com.leliuk.configuration;
 
+import com.leliuk.controller.EvaluationResultController;
 import com.leliuk.controller.HierarchyConstructionController;
 import com.leliuk.controller.PriorityEvaluationController;
 import com.leliuk.model.view.View;
@@ -16,8 +17,9 @@ import java.io.IOException;
 @AllArgsConstructor
 @Configuration
 public class ViewConfiguration {
-    private static final String HIERARCHY_CONSTRUCTION_VIEW_PATH = "/hierarchy_construction.fxml";
-    private static final String PRIORITY_EVALUATION_VIEW_PATH = "/priority_evaluation.fxml";
+    private static final String HIERARCHY_CONSTRUCTION_VIEW_PATH = "/fxml/hierarchy_construction.fxml";
+    private static final String PRIORITY_EVALUATION_VIEW_PATH = "/fxml/priority_evaluation.fxml";
+    private static final String EVALUATION_RESULT_VIEW_PATH = "/fxml/evaluation_result.fxml";
 
     private final ApplicationContext context;
 
@@ -29,6 +31,11 @@ public class ViewConfiguration {
     @Bean
     public View<GridPane, PriorityEvaluationController> priorityEvaluationView() throws IOException {
         return new View<>(initFxmlLoader(PRIORITY_EVALUATION_VIEW_PATH));
+    }
+
+    @Bean
+    public View<GridPane, EvaluationResultController> evaluationResultView() throws IOException {
+        return new View<>(initFxmlLoader(EVALUATION_RESULT_VIEW_PATH));
     }
 
     private FXMLLoader initFxmlLoader(String resourcePath) {
