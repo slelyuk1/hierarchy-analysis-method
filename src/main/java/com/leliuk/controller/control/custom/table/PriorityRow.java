@@ -16,20 +16,22 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Getter
-public class PriorityRow<T extends Number> {
+public class PriorityRow {
     private final ObjectProperty<HierarchyMember> hierarchyMember;
     private final List<DoubleProperty> priorities;
-    private final DoubleProperty sum;
-    private final DoubleProperty consistencyMagnitude;
+    private final DoubleProperty prioritySum;
+    private final DoubleProperty localPriority;
+    private final DoubleProperty localPriorityNormalized;
+    private final DoubleProperty lambda;
 
-    public PriorityRow(Priority<T> priority) {
+    public PriorityRow(Priority priority) {
         hierarchyMember = new SimpleObjectProperty<>(priority.getHierarchyMember());
-        priorities = Arrays.stream(priority.getPriorities())
+        priorities = priority.getValues().stream()
                 .map(priorityElem -> new SimpleDoubleProperty(priorityElem.doubleValue()))
                 .collect(Collectors.toList());
-        sum = new SimpleDoubleProperty();
+        prioritySum = new SimpleDoubleProperty();
 
-        sum.bind(new DoubleBinding() {
+        prioritySum.bind(new DoubleBinding() {
             {
                 bind(priorities.toArray(new Observable[0]));
             }
@@ -42,8 +44,8 @@ public class PriorityRow<T extends Number> {
             }
         });
 
-        consistencyMagnitude = new SimpleDoubleProperty();
-        consistencyMagnitude.bind(new DoubleBinding() {
+        localPriority = new SimpleDoubleProperty();
+        localPriority.bind(new DoubleBinding() {
             {
                 bind(priorities.toArray(new Observable[0]));
             }
@@ -54,6 +56,38 @@ public class PriorityRow<T extends Number> {
                         .map(ObservableDoubleValue::get)
                         .reduce(1.0, (l, r) -> l * r);
                 return Math.pow(multiplied, 1.0 / priorities.size());
+            }
+        });
+        localPriorityNormalized = new SimpleDoubleProperty();
+        lambda = new SimpleDoubleProperty();
+    }
+
+    public void bindLocalPriorities(List<DoubleProperty> localPriorities) {
+        // todo do decisioning depending on localPriorities
+        DoubleProperty[] localPrioritiesArr = localPriorities.toArray(new DoubleProperty[0]);
+        localPriorityNormalized.bind(new DoubleBinding() {
+            {
+                bind(localPrioritiesArr);
+            }
+
+            @Override
+            protected double computeValue() {
+                double currentLocalPriority = localPriority.doubleValue();
+                double localPrioritiesSum = Arrays.stream(localPrioritiesArr)
+                        .map(DoubleProperty::doubleValue)
+                        .reduce(0.0, Double::sum);
+                return currentLocalPriority / localPrioritiesSum;
+            }
+        });
+
+        lambda.bind(new DoubleBinding() {
+            {
+                bind(localPriorityNormalized, prioritySum);
+            }
+
+            @Override
+            protected double computeValue() {
+                return prioritySum.getValue() * localPriorityNormalized.getValue();
             }
         });
     }

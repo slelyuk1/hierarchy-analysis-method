@@ -1,13 +1,15 @@
 package com.leliuk.model.hierarchy;
 
+import lombok.Data;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.io.Serializable;
 
-@Getter
+@Data
 public class HierarchyMember implements Serializable {
-    private final String name;
-    private final String description;
+    private String name;
+    private String description;
 
     public HierarchyMember(String name) {
         this.name = name;
@@ -17,9 +19,5 @@ public class HierarchyMember implements Serializable {
     public HierarchyMember(String name, String description) {
         this.name = name;
         this.description = description;
-    }
-
-    public static HierarchyMember copyOf(HierarchyMember toCopy) {
-        return new HierarchyMember(toCopy.getName(), toCopy.getDescription());
     }
 }

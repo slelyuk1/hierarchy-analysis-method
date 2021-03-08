@@ -9,7 +9,7 @@
     <children>
         <ToolBar prefHeight="40.0" prefWidth="200.0">
             <items>
-                <Button mnemonicParsing="false" onMouseClicked="#onImportClick" text="Import"/>
+                <Button mnemonicParsing="false" onMouseClicked="#onImportClicked" text="Import"/>
             </items>
         </ToolBar>
         <GridPane alignment="center" hgap="10.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity"

@@ -1,40 +1,66 @@
 package com.leliuk.controller.control.custom.table;
 
+import com.leliuk.configuration.RandomConsistencyValuesConfiguration;
 import com.leliuk.model.hierarchy.Priority;
 import com.leliuk.model.hierarchy.PriorityMatrix;
+import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TablePosition;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.TextFieldTableCell;
+import lombok.Getter;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
-public class PriorityTableView extends TableView<PriorityRow<Double>> {
+@Getter
+public class PriorityTableView extends TableView<PriorityRow> {
+    private final DoubleProperty consistencyIndex;
+    private final DoubleProperty consistencyValue;
+    private RandomConsistencyValuesConfiguration randomConsistencyValuesConfiguration;
 
-    private PriorityMatrix matrix;
+    public PriorityTableView() {
+        consistencyIndex = new SimpleDoubleProperty();
+        consistencyValue = new SimpleDoubleProperty();
+    }
+
+    public void setRandomConsistencyValues(RandomConsistencyValuesConfiguration randomConsistencyValuesConfiguration) {
+        this.randomConsistencyValuesConfiguration = randomConsistencyValuesConfiguration;
+    }
 
     public void setPriorityMatrix(PriorityMatrix matrix) {
         getItems().clear();
-        matrix.getPriorities().stream()
+        List<PriorityRow> rows = matrix.getPriorities().stream()
                 .map(PriorityRow::new)
-                .forEach(getItems()::add);
-        this.matrix = matrix;
-        refresh();
+                .collect(Collectors.toList());
+        List<DoubleProperty> localPriorities = rows.stream()
+                .map(PriorityRow::getLocalPriority)
+                .collect(Collectors.toList());
+        rows.forEach(row -> {
+            row.bindLocalPriorities(localPriorities);
+            getItems().add(row);
+        });
+        bindConsistencyIndex();
+        bindConsistencyValue();
+
+        buildColumns(matrix);
     }
 
-    protected TableColumn<PriorityRow<Double>, String> createAlternativeNameColumn(String goalName) {
-        TableColumn<PriorityRow<Double>, String> alternativeNameColumn = new TableColumn<>(goalName);
+    protected TableColumn<PriorityRow, String> createAlternativeNameColumn(String goalName) {
+        TableColumn<PriorityRow, String> alternativeNameColumn = new TableColumn<>(goalName);
         alternativeNameColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getHierarchyMember().get().getName()));
         alternativeNameColumn.setEditable(false);
         alternativeNameColumn.setSortable(false);
         return alternativeNameColumn;
     }
 
-    protected TableColumn<PriorityRow<Double>, Number> createPriorityColumn(String name, final int columnIndex) {
-        TableColumn<PriorityRow<Double>, Number> column = new TableColumn<>(name);
+    protected TableColumn<PriorityRow, Number> createPriorityColumn(String name, final int columnIndex) {
+        TableColumn<PriorityRow, Number> column = new TableColumn<>(name);
         column.setCellValueFactory(param -> param.getValue().getPriorities().get(columnIndex));
         column.setOnEditCommit(event -> {
             double toSet = Math.round(
@@ -56,7 +82,7 @@ public class PriorityTableView extends TableView<PriorityRow<Double>> {
             selectedReversed.set(Double.MIN_VALUE);
             if (columnIndex == rowIndex) {
                 selected.set(1);
-            }  else {
+            } else {
                 selected.set(toSet);
                 selectedReversed.set(toSet == 0 ? 0 : 1 / toSet);
             }
@@ -66,19 +92,65 @@ public class PriorityTableView extends TableView<PriorityRow<Double>> {
         return column;
     }
 
-    @Override
-    public void refresh() {
-        super.refresh();
-        buildColumns();
+    protected TableColumn<PriorityRow, Number> createLocalPriorityColumn() {
+        TableColumn<PriorityRow, Number> column = new TableColumn<>("Local Priority");
+        column.setCellValueFactory(param -> param.getValue().getLocalPriority());
+        column.setSortable(false);
+        column.setEditable(false);
+        return column;
     }
 
-    private void buildColumns() {
+    protected TableColumn<PriorityRow, Number> createLocalPriorityNormalizedColumn() {
+        TableColumn<PriorityRow, Number> column = new TableColumn<>("Local Priority Normalized");
+        column.setCellValueFactory(param -> param.getValue().getLocalPriorityNormalized());
+        column.setSortable(false);
+        column.setEditable(false);
+        return column;
+    }
+
+    protected TableColumn<PriorityRow, Number> createLambdaColumn() {
+        TableColumn<PriorityRow, Number> column = new TableColumn<>("λ");
+        column.setCellValueFactory(param -> param.getValue().getLambda());
+        column.setSortable(false);
+        column.setEditable(false);
+        return column;
+    }
+
+    private void bindConsistencyIndex() {
+        DoubleProperty[] lamdas = getItems().stream()
+                .map(PriorityRow::getLambda)
+                .toArray(DoubleProperty[]::new);
+        int itemsQuantity = lamdas.length;
+        consistencyIndex.bind(new DoubleBinding() {
+            {
+                bind(lamdas);
+            }
+
+            @Override
+            protected double computeValue() {
+                double lambdasSum = Arrays.stream(lamdas)
+                        .map(DoubleProperty::doubleValue)
+                        .reduce(0.0, Double::sum);
+                return (lambdasSum - itemsQuantity) / (itemsQuantity - 1);
+            }
+        });
+    }
+
+    private void bindConsistencyValue() {
+        double randomConsistencyValue = randomConsistencyValuesConfiguration.getRandomConsistencyValues().get(getItems().size() - 1);
+        consistencyValue.bind(consistencyIndex.divide(randomConsistencyValue));
+    }
+
+    private void buildColumns(PriorityMatrix matrix) {
         getColumns().clear();
         getColumns().add(createAlternativeNameColumn(matrix.getGoal().getName()));
-        List<Priority<Double>> alternatives = matrix.getPriorities();
+        List<Priority> alternatives = matrix.getPriorities();
         for (int i = 0; i < alternatives.size(); ++i) {
-            Priority<Double> priority = alternatives.get(i);
+            Priority priority = alternatives.get(i);
             getColumns().add(createPriorityColumn(priority.getHierarchyMember().getName(), i));
         }
+        getColumns().add(createLocalPriorityColumn());
+        getColumns().add(createLocalPriorityNormalizedColumn());
+        getColumns().add(createLambdaColumn());
     }
 }

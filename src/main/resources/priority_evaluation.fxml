@@ -15,6 +15,7 @@
       <RowConstraints minHeight="10.0" prefHeight="30.0" />
       <RowConstraints minHeight="10.0" />
       <RowConstraints minHeight="10.0" prefHeight="30.0" valignment="CENTER" />
+      <RowConstraints minHeight="10.0" prefHeight="30.0" valignment="CENTER" />
       <RowConstraints minHeight="10.0" prefHeight="30.0" />
       <RowConstraints maxHeight="1.7976931348623157E308" minHeight="-Infinity" />
    </rowConstraints>
@@ -26,12 +27,11 @@
       <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
    </padding>
    <children>
-      <!--   todo use custom   -->
       <PriorityTableView fx:id="priorityTableView" editable="true" maxHeight="1.7976931348623157E308" minHeight="-Infinity" prefWidth="200.0" stylesheets="@styles/priority_table_style.css" GridPane.columnSpan="2" GridPane.rowIndex="1">
          <columnResizePolicy>
             <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
          </columnResizePolicy></PriorityTableView>
-      <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" GridPane.halignment="CENTER" GridPane.rowIndex="3" GridPane.valignment="CENTER">
+      <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" GridPane.halignment="CENTER" GridPane.rowIndex="4" GridPane.valignment="CENTER">
          <children>
             <Button fx:id="previousButton" mnemonicParsing="false" onMouseClicked="#onPreviousClicked" text="&lt;">
                <HBox.margin>
@@ -47,7 +47,22 @@
       </HBox>
       <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" GridPane.rowIndex="2">
          <children>
-            <Label text="..." />
+            <Label text="Consistency Index:" />
+            <Label fx:id="consistencyIndexLabel" text="...">
+               <HBox.margin>
+                  <Insets left="5.0" />
+               </HBox.margin>
+            </Label>
+         </children>
+      </HBox>
+      <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" GridPane.rowIndex="3">
+         <children>
+            <Label text="Consistency Value" />
+            <Label fx:id="consistencyValueLabel" text="...">
+               <HBox.margin>
+                  <Insets left="5.0" />
+               </HBox.margin>
+            </Label>
          </children>
       </HBox>
    </children>

@@ -1,5 +1,6 @@
 package com.leliuk.controller;
 
+import com.leliuk.configuration.RandomConsistencyValuesConfiguration;
 import com.leliuk.controller.control.custom.table.PriorityRow;
 import com.leliuk.controller.control.custom.table.PriorityTableView;
 import com.leliuk.model.hierarchy.HierarchyModel;
@@ -12,11 +13,11 @@ import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.stage.Stage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,20 +29,33 @@ public class PriorityEvaluationController extends AbstractStageAware {
     private Button previousButton;
     @FXML
     private Button nextButton;
+    @FXML
+    private Label consistencyIndexLabel;
+    @FXML
+    private Label consistencyValueLabel;
 
     private HierarchyAnalysisService service;
+    private RandomConsistencyValuesConfiguration randomConsistencyValuesConfiguration;
 
     private IntegerProperty selectedMatrixIndex;
     private List<PriorityMatrix> priorityMatrices;
 
-    public void fillPriorityTable(PriorityMatrix first, PriorityMatrix second, List<PriorityMatrix> other) {
-        priorityMatrices = new ArrayList<>(other.size() + 2);
-        priorityMatrices.add(first);
-        priorityMatrices.add(second);
-        priorityMatrices.addAll(other);
+    public void setHierarchyModel(HierarchyModel model) {
+        priorityTableView.setRandomConsistencyValues(randomConsistencyValuesConfiguration);
+        priorityMatrices = new ArrayList<>(model.getOtherAlternativeMatrices().size() + 2);
+        priorityMatrices.add(model.getGoalMatrix());
+        priorityMatrices.add(model.getFirstAlternativeMatrix());
+        priorityMatrices.addAll(model.getOtherAlternativeMatrices());
         nextButton.disableProperty().bind(selectedMatrixIndex.greaterThan(priorityMatrices.size() - 2));
         selectAnotherMatrix(0);
+        consistencyIndexLabel.textProperty().bind(priorityTableView.getConsistencyIndex().asString());
+        consistencyValueLabel.textProperty().bind(priorityTableView.getConsistencyValue().asString());
         prepareStage();
+    }
+
+    @Autowired
+    public void setRandomConsistencyValuesConfiguration(RandomConsistencyValuesConfiguration randomConsistencyValuesConfiguration) {
+        this.randomConsistencyValuesConfiguration = randomConsistencyValuesConfiguration;
     }
 
     @Autowired
@@ -60,19 +74,21 @@ public class PriorityEvaluationController extends AbstractStageAware {
     }
 
     private void selectAnotherMatrix(int index) {
+        moveInfoToPriorityMatrix();
         PriorityMatrix toView = priorityMatrices.get(index);
         selectedMatrixIndex.set(index);
         priorityTableView.setPriorityMatrix(toView);
+        priorityTableView.refresh();
     }
 
     private void moveInfoToPriorityMatrix() {
-        List<Priority<Double>> priorities = priorityMatrices.get(selectedMatrixIndex.get()).getPriorities();
-        List<PriorityRow<Double>> rows = priorityTableView.getItems();
+        List<Priority> priorities = priorityMatrices.get(selectedMatrixIndex.get()).getPriorities();
+        List<PriorityRow> rows = priorityTableView.getItems();
         for (int i = 0; i < rows.size(); ++i) {
-            Double[] curPriority = priorities.get(i).getPriorities();
+            List<Number> curPriority = priorities.get(i).getValues();
             List<DoubleProperty> row = rows.get(i).getPriorities();
             for (int j = 0; j < row.size(); ++j) {
-                curPriority[j] = row.get(j).getValue();
+                curPriority.set(j, row.get(j).getValue());
             }
         }
     }
@@ -92,9 +108,11 @@ public class PriorityEvaluationController extends AbstractStageAware {
         Stage stage = getStage().orElseThrow(() -> new IllegalStateException("PriorityEvaluationController is not aware of any stage!"));
         stage.setOnCloseRequest(event -> {
             moveInfoToPriorityMatrix();
-            HierarchyModel model = new HierarchyModel(
-                    priorityMatrices.get(0), priorityMatrices.get(1), new ArrayList<>(priorityMatrices.subList(2, priorityMatrices.size())));
-            service.serializePriorityMatrices(new File("saved/savedState.ham"), model);
+            HierarchyModel model = new HierarchyModel("saved/savedState.ham",
+                    priorityMatrices.get(0),
+                    priorityMatrices.get(1),
+                    new ArrayList<>(priorityMatrices.subList(2, priorityMatrices.size())));
+            service.serializePriorityMatrices(model);
         });
     }
 }

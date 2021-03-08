@@ -1,13 +1,16 @@
 package com.leliuk.model.hierarchy;
 
-import lombok.Value;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
 import java.io.Serializable;
 import java.util.List;
 
-@Value
+@Data
+@AllArgsConstructor
 public class HierarchyModel implements Serializable {
-    PriorityMatrix goalMatrix;
-    PriorityMatrix firstAlternativeMatrix;
-    List<PriorityMatrix> otherAlternativeMatrices;
+    private String filePath;
+    private PriorityMatrix goalMatrix;
+    private PriorityMatrix firstAlternativeMatrix;
+    private List<PriorityMatrix> otherAlternativeMatrices;
 }

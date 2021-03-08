@@ -1,8 +1,8 @@
 package com.leliuk.controller;
 
 import com.leliuk.model.hierarchy.HierarchyMember;
+import com.leliuk.model.hierarchy.HierarchyModel;
 import com.leliuk.model.hierarchy.Priority;
-import com.leliuk.model.hierarchy.PriorityMatrix;
 import com.leliuk.model.view.AbstractStageAware;
 import com.leliuk.model.view.View;
 import com.leliuk.service.HierarchyAnalysisService;
@@ -11,9 +11,9 @@ import javafx.beans.binding.BooleanExpression;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import javafx.util.Callback;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -39,14 +39,7 @@ public class HierarchyConstructionController extends AbstractStageAware {
 
     private HierarchyAnalysisService service;
     private View<GridPane, PriorityEvaluationController> priorityEvaluationView;
-
-    public void onNavigateToPrioritiesClicked() {
-        HierarchyMember goal = new HierarchyMember(goalTextField.getText());
-        List<PriorityMatrix> matrices = service.createPriorityMatrices(goal, criteriaListView.getItems(), alternativesListView.getItems());
-        PriorityEvaluationController priorityEvaluationController = priorityEvaluationView.getController();
-        priorityEvaluationController.fillPriorityTable(matrices.get(0), matrices.get(1), matrices.subList(2, matrices.size()));
-        getStageDangerously().setScene(new Scene(priorityEvaluationView.getGraphics()));
-    }
+    private HierarchyModel model;
 
     @Autowired
     public void setPriorityEvaluationView(View<GridPane, PriorityEvaluationController> priorityEvaluationView) {
@@ -56,6 +49,32 @@ public class HierarchyConstructionController extends AbstractStageAware {
     @Autowired
     public void setService(HierarchyAnalysisService service) {
         this.service = service;
+    }
+
+    @Override
+    public void setStage(Stage stage) {
+        super.setStage(stage);
+        stage.setOnCloseRequest(event -> {
+            HierarchyMember goal = new HierarchyMember(goalTextField.getText());
+            if(model != null){
+                service.mergeHierarchyModel(model, goal, criteriaListView.getItems(), alternativesListView.getItems());
+            }else{
+                model = service.createHierarchyModel(goal, criteriaListView.getItems(), alternativesListView.getItems());
+            }
+            service.serializePriorityMatrices(model);
+        });
+    }
+
+    public void onNavigateToPrioritiesClicked() {
+        HierarchyMember goal = new HierarchyMember(goalTextField.getText());
+        if (model == null) {
+            model = service.createHierarchyModel(goal, criteriaListView.getItems(), alternativesListView.getItems());
+        } else {
+            service.mergeHierarchyModel(model, goal, criteriaListView.getItems(), alternativesListView.getItems());
+        }
+        PriorityEvaluationController priorityEvaluationController = priorityEvaluationView.getController();
+        priorityEvaluationController.setHierarchyModel(model);
+        getStageDangerously().setScene(new Scene(priorityEvaluationView.getGraphics()));
     }
 
     @FXML
@@ -81,7 +100,7 @@ public class HierarchyConstructionController extends AbstractStageAware {
     }
 
     @FXML
-    public void onImportClick() {
+    public void onImportClicked() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Import Hierarchy");
         fileChooser.setInitialDirectory(new File("saved/"));
@@ -93,13 +112,16 @@ public class HierarchyConstructionController extends AbstractStageAware {
                 criteriaListView.getItems().addAll(
                         model.getGoalMatrix().getPriorities().stream()
                                 .map(Priority::getHierarchyMember)
+                                .filter(hierarchyMember -> !criteriaListView.getItems().contains(hierarchyMember))
                                 .collect(Collectors.toList())
                 );
                 alternativesListView.getItems().addAll(
                         model.getFirstAlternativeMatrix().getPriorities().stream()
                                 .map(Priority::getHierarchyMember)
+                                .filter(hierarchyMember -> !alternativesListView.getItems().contains(hierarchyMember))
                                 .collect(Collectors.toList())
                 );
+                this.model = model;
             });
         }
     }
@@ -110,6 +132,20 @@ public class HierarchyConstructionController extends AbstractStageAware {
         prepareNavigateToPrioritiesButton();
         prepareAddButton();
         prepareDeleteButton();
+
+        //         todo remove
+        goalTextField.setText("Будинок");
+        criteriaListView.getItems().add(new HierarchyMember("РБ"));
+        criteriaListView.getItems().add(new HierarchyMember("ЗМ"));
+        criteriaListView.getItems().add(new HierarchyMember("М"));
+        criteriaListView.getItems().add(new HierarchyMember("ЧП"));
+        criteriaListView.getItems().add(new HierarchyMember("Д"));
+        criteriaListView.getItems().add(new HierarchyMember("СО"));
+        criteriaListView.getItems().add(new HierarchyMember("ЗС"));
+        criteriaListView.getItems().add(new HierarchyMember("ФУ"));
+        alternativesListView.getItems().add(new HierarchyMember("А"));
+        alternativesListView.getItems().add(new HierarchyMember("Б"));
+        alternativesListView.getItems().add(new HierarchyMember("В"));
     }
 
     private void prepareCriteriaAndAlternativesListViews() {
