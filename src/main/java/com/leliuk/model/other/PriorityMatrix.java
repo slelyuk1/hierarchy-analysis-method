@@ -1,8 +1,8 @@
 package com.leliuk.model.other;
 
 import com.leliuk.model.hierarchy.HierarchyMember;
-import com.sun.istack.internal.Nullable;
 import lombok.Getter;
+import org.springframework.lang.Nullable;
 
 import java.io.Serializable;
 import java.util.Collection;

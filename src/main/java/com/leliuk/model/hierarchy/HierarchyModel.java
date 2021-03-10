@@ -1,8 +1,8 @@
 package com.leliuk.model.hierarchy;
 
 import com.leliuk.model.other.PriorityMatrix;
-import com.sun.istack.internal.Nullable;
 import lombok.Data;
+import org.springframework.lang.Nullable;
 
 import java.io.File;
 import java.io.Serializable;

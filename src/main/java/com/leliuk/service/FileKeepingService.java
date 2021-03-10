@@ -2,12 +2,12 @@ package com.leliuk.service;
 
 import com.leliuk.configuration.FileKeepingConfiguration;
 import com.leliuk.model.hierarchy.HierarchyModel;
-import com.sun.istack.internal.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;

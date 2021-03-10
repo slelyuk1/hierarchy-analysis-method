@@ -1,9 +1,9 @@
 package com.leliuk.model.hierarchy;
 
-import com.sun.istack.internal.NotNull;
 import lombok.Data;
 import org.springframework.util.StringUtils;
 
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 @Data
