@@ -5,7 +5,7 @@ import javafx.stage.Stage;
 import java.util.Optional;
 
 public interface StageAware {
-    void setStage(Stage stage);
-
     Optional<Stage> getStage();
+
+    void setStage(Stage stage);
 }

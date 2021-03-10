@@ -43,8 +43,8 @@ public class EvaluationResultController extends AbstractStageAware {
         Map<HierarchyMember, Double> globalPriorities = new HashMap<>();
         alternativesLocalPriorities.forEach(alternative ->
                 alternative.getNormalizedLocalPriorities().forEach((key, value) -> {
-                    double criteriaNormalizedLocalPriority = criteriaNormalizedLocalPriorities.getNormalizedLocalPriorities()
-                            .getOrDefault(alternative.getGoal(), Double.NaN);
+                    double criteriaNormalizedLocalPriority =
+                            criteriaNormalizedLocalPriorities.getNormalizedLocalPriorities().getOrDefault(alternative.getGoal(), Double.NaN);
                     globalPriorities.merge(key,
                             value * criteriaNormalizedLocalPriority,
                             (l, r) -> l + value * criteriaNormalizedLocalPriority);

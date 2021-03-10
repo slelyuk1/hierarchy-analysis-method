@@ -12,8 +12,8 @@ import java.util.stream.Collectors;
 
 @Getter
 public class PriorityMatrix implements Serializable {
-    private HierarchyMember goal;
     private final List<Priority> priorities;
+    private HierarchyMember goal;
 
     public PriorityMatrix(@Nullable HierarchyMember goal, Collection<HierarchyMember> alternatives) {
         this.goal = goal;

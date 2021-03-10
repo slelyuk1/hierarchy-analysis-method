@@ -19,12 +19,12 @@ public class Priority implements Serializable {
         this.values = zeroGenerator().limit(valuesQuantity).collect(Collectors.toList());
     }
 
-    public void addValues(int quantity) {
-        values.addAll(zeroGenerator().limit(quantity).collect(Collectors.toList()));
-    }
-
     private static Stream<Double> zeroGenerator() {
         return Stream.generate(() -> 0.0);
+    }
+
+    public void addValues(int quantity) {
+        values.addAll(zeroGenerator().limit(quantity).collect(Collectors.toList()));
     }
 
 }

@@ -37,7 +37,7 @@ public class FileKeepingService {
 
     public Optional<HierarchyModel> retrieveHierarchyModel(@NotNull File toRetrieveFrom) {
         try {
-            return Optional.of(serializationService.<HierarchyModel>deserializeObject(toRetrieveFrom));
+            return Optional.of(serializationService.deserializeObject(toRetrieveFrom));
         } catch (IOException | ClassNotFoundException e) {
             log.error("An error occurred during serialization of HierarchyModel:", e);
         }

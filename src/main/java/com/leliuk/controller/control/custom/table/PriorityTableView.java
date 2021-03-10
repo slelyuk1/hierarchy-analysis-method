@@ -150,7 +150,7 @@ public class PriorityTableView extends TableView<PriorityRow> {
             protected double computeValue() {
                 int index = getItems().size() - 1;
                 double randomConsistencyValue = randomConsistencyValuesConfiguration.getRandomConsistencyValues().get(index);
-                if(randomConsistencyValue == 0.0){
+                if (randomConsistencyValue == 0.0) {
                     return 0.0;
                 }
                 return consistencyIndex.get() / randomConsistencyValue;

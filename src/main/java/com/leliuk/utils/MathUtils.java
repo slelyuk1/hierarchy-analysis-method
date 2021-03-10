@@ -4,6 +4,10 @@ import java.util.Collection;
 
 public final class MathUtils {
 
+    private MathUtils() {
+        throw new IllegalStateException("MathUtils cannot be instantiated!");
+    }
+
     public static double sum(Collection<Double> toSum) {
         return toSum.stream()
                 .reduce(0.0, Double::sum);
@@ -43,9 +47,5 @@ public final class MathUtils {
         }
         double lambdaSum = sum(lambdas);
         return (lambdaSum - itemsQuantity) / (itemsQuantity - 1);
-    }
-
-    private MathUtils() {
-        throw new IllegalStateException("MathUtils cannot be instantiated!");
     }
 }
