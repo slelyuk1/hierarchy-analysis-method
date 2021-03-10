@@ -33,6 +33,18 @@ public final class MathUtils {
         return prioritySum * normalizedLocalPriority;
     }
 
+    public static double consistencyIndex(Collection<Double> lambdas) {
+        int itemsQuantity = lambdas.size();
+        if (itemsQuantity < 1) {
+            return Double.NaN;
+        }
+        if (itemsQuantity == 1) {
+            return 1.0;
+        }
+        double lambdaSum = sum(lambdas);
+        return (lambdaSum - itemsQuantity) / (itemsQuantity - 1);
+    }
+
     private MathUtils() {
         throw new IllegalStateException("MathUtils cannot be instantiated!");
     }

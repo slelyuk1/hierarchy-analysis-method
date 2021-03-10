@@ -1,0 +1,19 @@
+{
+  "properties": [
+    {
+      "name": "file-keeping.extension",
+      "type": "java.lang.String",
+      "description": "Extension for files which represent hierarchy model."
+    },
+    {
+      "name": "file-keeping.default-keeping-location",
+      "type": "java.lang.String",
+      "description": "Default location where files will be kept."
+    },
+    {
+      "name": "file-keeping.default-keeping-file-name",
+      "type": "java.lang.String",
+      "description": "Default file name for hierarchy model with not specified file name."
+    }
+  ]
+}

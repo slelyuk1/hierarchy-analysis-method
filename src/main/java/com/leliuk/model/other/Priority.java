@@ -1,5 +1,6 @@
-package com.leliuk.model.hierarchy;
+package com.leliuk.model.other;
 
+import com.leliuk.model.hierarchy.HierarchyMember;
 import lombok.Getter;
 
 import java.io.Serializable;

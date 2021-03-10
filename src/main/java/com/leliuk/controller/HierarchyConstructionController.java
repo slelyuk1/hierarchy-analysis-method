@@ -2,10 +2,10 @@ package com.leliuk.controller;
 
 import com.leliuk.model.hierarchy.HierarchyMember;
 import com.leliuk.model.hierarchy.HierarchyModel;
-import com.leliuk.model.hierarchy.Priority;
+import com.leliuk.model.other.Priority;
 import com.leliuk.model.view.AbstractStageAware;
 import com.leliuk.model.view.View;
-import com.leliuk.service.HierarchyAnalysisService;
+import com.leliuk.service.FileKeepingService;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.BooleanExpression;
 import javafx.fxml.FXML;
@@ -15,13 +15,18 @@ import javafx.scene.layout.GridPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Callback;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.io.File;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Component
 public class HierarchyConstructionController extends AbstractStageAware {
     @FXML
@@ -37,7 +42,8 @@ public class HierarchyConstructionController extends AbstractStageAware {
     @FXML
     private Button navigateToPrioritiesButton;
 
-    private HierarchyAnalysisService service;
+    private FileKeepingService fileKeepingService;
+
     private View<GridPane, PriorityEvaluationController> priorityEvaluationView;
     private HierarchyModel model;
 
@@ -47,33 +53,12 @@ public class HierarchyConstructionController extends AbstractStageAware {
     }
 
     @Autowired
-    public void setService(HierarchyAnalysisService service) {
-        this.service = service;
-    }
-
-    @Override
-    public void setStage(Stage stage) {
-        super.setStage(stage);
-        stage.setOnCloseRequest(event -> {
-            HierarchyMember goal = new HierarchyMember(goalTextField.getText());
-            if (criteriaListView.getItems().size() > 1 && alternativesListView.getItems().size() > 1) {
-                if (model != null) {
-                    service.mergeHierarchyModel(model, goal, criteriaListView.getItems(), alternativesListView.getItems());
-                } else {
-                    model = service.createHierarchyModel(goal, criteriaListView.getItems(), alternativesListView.getItems());
-                }
-                service.serializePriorityMatrices(model);
-            }
-        });
+    public void setFileKeepingService(FileKeepingService fileKeepingService) {
+        this.fileKeepingService = fileKeepingService;
     }
 
     public void onNavigateToPrioritiesClicked() {
-        HierarchyMember goal = new HierarchyMember(goalTextField.getText());
-        if (model == null) {
-            model = service.createHierarchyModel(goal, criteriaListView.getItems(), alternativesListView.getItems());
-        } else {
-            service.mergeHierarchyModel(model, goal, criteriaListView.getItems(), alternativesListView.getItems());
-        }
+        model = getActualModel();
         PriorityEvaluationController priorityEvaluationController = priorityEvaluationView.getController();
         priorityEvaluationController.setHierarchyModel(model);
         getStageDangerously().setScene(new Scene(priorityEvaluationView.getGraphics()));
@@ -101,32 +86,91 @@ public class HierarchyConstructionController extends AbstractStageAware {
         alternativesListView.getSelectionModel().getSelectedIndices().forEach(i -> alternatives.remove(i.intValue()));
     }
 
+
+    @Override
+    public void setStage(Stage stage) {
+        super.setStage(stage);
+        stage.setOnCloseRequest(event -> {
+            String goalName = goalTextField.getText();
+            HierarchyMember goal = StringUtils.hasText(goalName) ? new HierarchyMember(goalName) : null;
+            if (model != null) {
+                model.update(goal, criteriaListView.getItems(), alternativesListView.getItems());
+            } else {
+                model = new HierarchyModel(goal, criteriaListView.getItems(), alternativesListView.getItems());
+            }
+            fileKeepingService.saveHierarchyModel(model);
+        });
+    }
+
     @FXML
-    public void onImportClicked() {
+    private void onImportClicked() {
         // todo check when imported and added a new value
+        getFileFromUser(true).ifPresent(fileForImport ->
+                fileKeepingService.retrieveHierarchyModel(fileForImport).ifPresent(model -> {
+                    this.model = model;
+                    clearAllInfo();
+                    model.setSerializationFile(fileForImport);
+                    goalTextField.setText(model.getGoal().map(HierarchyMember::getName).orElse(""));
+                    model.getGoalMatrix().ifPresent(goalMatrix -> criteriaListView.getItems().addAll(
+                            goalMatrix.getPriorities().stream()
+                                    .map(Priority::getHierarchyMember)
+                                    .filter(hierarchyMember -> !criteriaListView.getItems().contains(hierarchyMember))
+                                    .collect(Collectors.toList())
+                    ));
+                    model.getAlternativeMatrices().stream().findFirst().ifPresent(alternativeMatrix -> alternativesListView.getItems().addAll(
+                            alternativeMatrix.getPriorities().stream()
+                                    .map(Priority::getHierarchyMember)
+                                    .filter(hierarchyMember -> !alternativesListView.getItems().contains(hierarchyMember))
+                                    .collect(Collectors.toList())
+                    ));
+                    // todo remove when update will be implemented
+                    if (!navigateToPrioritiesButton.isDisabled()) {
+                        onNavigateToPrioritiesClicked();
+                    }
+                })
+        );
+    }
+
+    @FXML
+    private void onExportClicked() {
+        getFileFromUser(false).ifPresent(fileForExport -> {
+            model = getActualModel();
+            model.setSerializationFile(fileForExport);
+            if (!fileKeepingService.saveHierarchyModel(model)) {
+                new Alert(Alert.AlertType.ERROR, "Unfortunately, this file cannot be exported!").showAndWait();
+            }
+        });
+
+    }
+
+    private HierarchyModel getActualModel() {
+        String goalName = goalTextField.getText();
+        HierarchyMember goal = StringUtils.hasText(goalName) ? new HierarchyMember(goalTextField.getText()) : null;
+        if (Objects.nonNull(model)) {
+            // todo uncomment when update is implemented
+            model.setGoal(goal);
+            // model.update(goal, criteriaListView.getItems(), alternativesListView.getItems());
+            return model;
+        } else {
+            return new HierarchyModel(goal, criteriaListView.getItems(), alternativesListView.getItems());
+        }
+    }
+
+    private Optional<File> getFileFromUser(boolean forImport) {
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Import Hierarchy");
+        fileChooser.setTitle(forImport ? "Import Hierarchy" : "Export Hierarchy");
         fileChooser.setInitialDirectory(new File("saved/"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("HAM", "*.ham"));
-        File chosen = fileChooser.showOpenDialog(getStageDangerously());
-        if (chosen != null) {
-            service.deserializePriorityMatrices(chosen).ifPresent(model -> {
-                goalTextField.setText(model.getGoalMatrix().getGoal().getName());
-                criteriaListView.getItems().addAll(
-                        model.getGoalMatrix().getPriorities().stream()
-                                .map(Priority::getHierarchyMember)
-                                .filter(hierarchyMember -> !criteriaListView.getItems().contains(hierarchyMember))
-                                .collect(Collectors.toList())
-                );
-                alternativesListView.getItems().addAll(
-                        model.getFirstAlternativeMatrix().getPriorities().stream()
-                                .map(Priority::getHierarchyMember)
-                                .filter(hierarchyMember -> !alternativesListView.getItems().contains(hierarchyMember))
-                                .collect(Collectors.toList())
-                );
-                this.model = model;
-            });
+        if (forImport) {
+            return Optional.ofNullable(fileChooser.showOpenDialog(getStageDangerously()));
         }
+        return Optional.ofNullable(fileChooser.showSaveDialog(getStageDangerously()));
+    }
+
+    private void clearAllInfo() {
+        goalTextField.clear();
+        criteriaListView.getItems().clear();
+        alternativesListView.getItems().clear();
     }
 
     @FXML

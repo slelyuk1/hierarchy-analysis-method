@@ -1,7 +1,7 @@
 package com.leliuk.controller.control.custom.table.row;
 
 import com.leliuk.model.hierarchy.HierarchyMember;
-import com.leliuk.model.hierarchy.Priority;
+import com.leliuk.model.other.Priority;
 import com.leliuk.utils.MathUtils;
 import javafx.beans.Observable;
 import javafx.beans.binding.DoubleBinding;

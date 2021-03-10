@@ -1,8 +1,8 @@
 package com.leliuk.model.hierarchy;
 
+import com.sun.istack.internal.NotNull;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import org.springframework.util.StringUtils;
 
 import java.io.Serializable;
 
@@ -11,13 +11,15 @@ public class HierarchyMember implements Serializable {
     private String name;
     private String description;
 
-    public HierarchyMember(String name) {
+    public HierarchyMember(@NotNull String name) {
+        if (!StringUtils.hasText(name)) {
+            throw new IllegalArgumentException("HierarchyMember name cannot be empty!");
+        }
         this.name = name;
-        description = null;
     }
 
     public HierarchyMember(String name, String description) {
-        this.name = name;
+        this(name);
         this.description = description;
     }
 }

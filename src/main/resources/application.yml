@@ -1,0 +1,4 @@
+file-keeping:
+  extension: .ham
+  default-keeping-location: saved/
+  default-keeping-file-name: last_saved

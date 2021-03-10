@@ -2,8 +2,10 @@ package com.leliuk.controller.control.custom.table;
 
 import com.leliuk.configuration.RandomConsistencyValuesConfiguration;
 import com.leliuk.controller.control.custom.table.row.PriorityRow;
-import com.leliuk.model.hierarchy.Priority;
-import com.leliuk.model.hierarchy.PriorityMatrix;
+import com.leliuk.model.hierarchy.HierarchyMember;
+import com.leliuk.model.other.Priority;
+import com.leliuk.model.other.PriorityMatrix;
+import com.leliuk.utils.MathUtils;
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -121,7 +123,6 @@ public class PriorityTableView extends TableView<PriorityRow> {
         DoubleProperty[] lamdas = getItems().stream()
                 .map(PriorityRow::getLambda)
                 .toArray(DoubleProperty[]::new);
-        int itemsQuantity = lamdas.length;
         consistencyIndex.bind(new DoubleBinding() {
             {
                 bind(lamdas);
@@ -129,22 +130,39 @@ public class PriorityTableView extends TableView<PriorityRow> {
 
             @Override
             protected double computeValue() {
-                double lambdasSum = Arrays.stream(lamdas)
-                        .map(DoubleProperty::doubleValue)
-                        .reduce(0.0, Double::sum);
-                return (lambdasSum - itemsQuantity) / (itemsQuantity - 1);
+                return MathUtils.consistencyIndex(
+                        Arrays.stream(lamdas)
+                                .map(DoubleProperty::get)
+                                .collect(Collectors.toList())
+                );
             }
         });
     }
 
     private void bindConsistencyValue() {
-        double randomConsistencyValue = randomConsistencyValuesConfiguration.getRandomConsistencyValues().get(getItems().size() - 1);
-        consistencyValue.bind(consistencyIndex.divide(randomConsistencyValue));
+
+        consistencyValue.bind(new DoubleBinding() {
+            {
+                bind(consistencyIndex);
+            }
+
+            @Override
+            protected double computeValue() {
+                int index = getItems().size() - 1;
+                double randomConsistencyValue = randomConsistencyValuesConfiguration.getRandomConsistencyValues().get(index);
+                if(randomConsistencyValue == 0.0){
+                    return 0.0;
+                }
+                return consistencyIndex.get() / randomConsistencyValue;
+            }
+        });
     }
 
     private void buildColumns(PriorityMatrix matrix) {
         getColumns().clear();
-        getColumns().add(createAlternativeNameColumn(matrix.getGoal().getName()));
+        HierarchyMember goal = matrix.getGoal()
+                .orElseThrow(() -> new IllegalArgumentException(String.format("Matrix %s doesn't have goal and this is illegal!", matrix)));
+        getColumns().add(createAlternativeNameColumn(goal.getName()));
         List<Priority> alternatives = matrix.getPriorities();
         for (int i = 0; i < alternatives.size(); ++i) {
             Priority priority = alternatives.get(i);
